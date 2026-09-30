@@ -1,0 +1,15 @@
+{
+  "type": "code",
+  "name": "UX Overhaul for Player Model Lib ",
+  "modid": "playermodellib-ux-overhaul",
+  "version": "0.3.40",
+  "description": "Roomier character creation screen for Player Model Library: a window that scales with your screen, bigger character preview, wider skin columns and a redesigned colour picker.",
+  "authors": [ "argentskyseer" ],
+  "dependencies": {
+    "game": "1.22.0",
+    "playermodellib": "1.23.2"
+  },
+  "side": "Client",
+  "requiredOnClient": false,
+  "requiredOnServer": false
+}

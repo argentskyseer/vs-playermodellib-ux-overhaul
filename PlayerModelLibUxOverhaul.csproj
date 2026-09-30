@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>PlayerModelLibUxOverhaul</AssemblyName>
+    <RootNamespace>PlayerModelLibUxOverhaul</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+
+    <!-- Override with: dotnet build -p:VintageStoryPath=/path/to/vintagestory -->
+    <VintageStoryPath Condition="'$(VintageStoryPath)' == ''">/opt/vintagestory</VintageStoryPath>
+    <VintageStoryData Condition="'$(VintageStoryData)' == ''">$(HOME)/.config/VintagestoryData</VintageStoryData>
+
+    <ModId>playermodellib-ux-overhaul</ModId>
+    <!-- The version lives in modinfo.json only; the zip name follows it. -->
+    <ModVersion>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/modinfo.json')), '"version"\s*:\s*"([^"]+)"').Groups[1].Value)</ModVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="VintagestoryAPI" HintPath="$(VintageStoryPath)/VintagestoryAPI.dll" Private="false" />
+    <Reference Include="VSEssentials" HintPath="$(VintageStoryPath)/Mods/VSEssentials.dll" Private="false" />
+    <Reference Include="VSSurvivalMod" HintPath="$(VintageStoryPath)/Mods/VSSurvivalMod.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(VintageStoryPath)/Lib/0Harmony.dll" Private="false" />
+    <Reference Include="cairo-sharp" HintPath="$(VintageStoryPath)/Lib/cairo-sharp.dll" Private="false" />
+    <Reference Include="OpenTK.Mathematics" HintPath="$(VintageStoryPath)/Lib/OpenTK.Mathematics.dll" Private="false" />
+    <Reference Include="OpenTK.Graphics" HintPath="$(VintageStoryPath)/Lib/OpenTK.Graphics.dll" Private="false" />
+    <Reference Include="Newtonsoft.Json" HintPath="$(VintageStoryPath)/Lib/Newtonsoft.Json.dll" Private="false" />
+    <!-- Compile-time copy of PlayerModelLib 1.23.2; the real one is loaded from the Mods folder at runtime. -->
+    <Reference Include="PlayerModelLib" HintPath="lib/PlayerModelLib.dll" Private="false" />
+    <!-- PlayerModelLib's public API exposes OverhaulLib types (2.0.10). -->
+    <Reference Include="overhaullib" HintPath="lib/overhaullib.dll" Private="false" />
+  </ItemGroup>
+
+  <!-- Builds dist/playermodellib-ux-overhaul_<version>.zip after every build. -->
+  <Target Name="PackageMod" AfterTargets="Build">
+    <PropertyGroup>
+      <StageDir>$(MSBuildProjectDirectory)/obj/modstage/</StageDir>
+      <ZipPath>$(MSBuildProjectDirectory)/dist/$(ModId)_$(ModVersion).zip</ZipPath>
+    </PropertyGroup>
+    <RemoveDir Directories="$(StageDir)" />
+    <Copy SourceFiles="$(TargetPath);modinfo.json" DestinationFolder="$(StageDir)" />
+    <MakeDir Directories="$(MSBuildProjectDirectory)/dist" />
+    <ZipDirectory SourceDirectory="$(StageDir)" DestinationFile="$(ZipPath)" Overwrite="true" />
+    <Message Importance="high" Text="Packaged $(ZipPath)" />
+  </Target>
+
+  <!-- dotnet build -t:Install replaces Mods/playermodellib-ux-overhaul/ with the fresh build (unzipped). -->
+  <Target Name="Install" DependsOnTargets="Build">
+    <PropertyGroup>
+      <InstallDir>$(VintageStoryData)/Mods/$(ModId)/</InstallDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <!-- Clear out the previous build, but never touch a .git folder or anything else hidden. -->
+      <OldInstallFiles Include="$(InstallDir)*" Exclude="$(InstallDir).*" />
+    </ItemGroup>
+    <Delete Files="@(OldInstallFiles)" />
+    <Unzip SourceFiles="$(MSBuildProjectDirectory)/dist/$(ModId)_$(ModVersion).zip" DestinationFolder="$(InstallDir)" />
+    <Message Importance="high" Text="Installed to $(InstallDir)" />
+  </Target>
+
+</Project>
